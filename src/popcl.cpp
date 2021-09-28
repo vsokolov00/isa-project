@@ -6,7 +6,7 @@ int main(int argc, char** argv) {
     std::cout << "Application starts." << std::endl;
 
     ArgumentsParser args_parser{};
-    MessagesRetriever msg_retriever{};
+    MessagesReceiver msg_retriever{};
 
     if(!args_parser.args_parse(argc, argv)) {
         return EXIT_FAILURE;

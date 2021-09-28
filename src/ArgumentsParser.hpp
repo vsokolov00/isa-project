@@ -1,5 +1,4 @@
-#ifndef ARGPARSER_HPP
-#define ARGPARSER_HPP
+#pragma once
 
 #include <string>
 #include <getopt.h>
@@ -58,5 +57,3 @@ private:
     //Establishes an unencrypted connection to the server and uses the STLS command
     bool secure_stls = false;
 };
-
-#endif
