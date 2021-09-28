@@ -6,5 +6,6 @@ project(popcl)
 
 set(sources
     src/ArgumentsParser.cpp
+    src/MessagesRetriever.cpp
     src/popcl.cpp)
 add_executable(popcl ${sources})

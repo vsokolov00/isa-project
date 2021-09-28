@@ -1,18 +1,20 @@
 #include "popcl.hpp"
-#include "ArgumentsParser.hpp"
 
 #include <iostream>
 
 int main(int argc, char** argv) {
-    std::cout << "Application start." << std::endl;
+    std::cout << "Application starts." << std::endl;
 
-    ArgumentsParser args_parser;
-
+    ArgumentsParser args_parser{};
+    MessagesRetriever msg_retriever{};
 
     if(!args_parser.args_parse(argc, argv)) {
         return EXIT_FAILURE;
     }
+    if(!msg_retriever.set_tcp_connection(args_parser)) {
+        return EXIT_FAILURE;
+    }
 
-
+    std::cout << "Successfully finished" << std::endl;
     return 0;
 }
