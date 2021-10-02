@@ -1,5 +1,9 @@
 #include "ArgumentsParser.hpp"
 
+#include <string>
+#include <getopt.h>
+#include <iostream>
+
 ArgumentsParser::~ArgumentsParser() {
 
 }

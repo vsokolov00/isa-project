@@ -1,9 +1,7 @@
 #pragma once
 
+
 #include <string>
-#include <getopt.h>
-#include <iostream>
-#include <netinet/in.h>
 
 const short POP3S_PORT = 995;
 const short POP3_PORT = 110;

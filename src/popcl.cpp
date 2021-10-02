@@ -1,6 +1,8 @@
-#include "popcl.hpp"
-
 #include <iostream>
+
+#include "ArgumentsParser.hpp"
+#include "MessagesReceiver.hpp"
+
 
 int main(int argc, char** argv) {
     std::cout << "Application starts." << std::endl;
@@ -15,6 +17,5 @@ int main(int argc, char** argv) {
         return EXIT_FAILURE;
     }
 
-    std::cout << "Successfully finished" << std::endl;
     return 0;
 }
