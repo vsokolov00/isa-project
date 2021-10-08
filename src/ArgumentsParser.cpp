@@ -1,6 +1,12 @@
+/* =========================================================================================================
+   Case:      Brno University of Technology, ISA - Network Applications and Network Administration
+   Date:      TODO
+   Author:    Vladislav Sokolovskii
+   Contact:   xsokol15@stud.fit.vutbr.cz
+   ========================================================================================================== */
+
 #include "ArgumentsParser.hpp"
 
-#include <string>
 #include <getopt.h>
 #include <iostream>
 
@@ -13,7 +19,6 @@ bool ArgumentsParser::args_parse(int argc, char** argv) {
     server = new std::string (argv[1]);
 
     while(true) {
-        int this_option_optind = optind ? optind : 1;
         int option_index = 0;
         std::string  ss;
         static struct option long_options[] = {

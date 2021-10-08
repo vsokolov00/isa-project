@@ -1,3 +1,11 @@
+# =========================================================================================================
+#  Case:      Brno University of Technology, ISA - Network Applications and Network Administration
+#  Date:      TODO
+#  Author:    Vladislav Sokolovskii
+#  Contact:   xsokol15@stud.fit.vutbr.cz
+#  Description: Makefile which calls the CMake in the correct folder and moves the executable to the root folder
+# ========================================================================================================== */
+
 BUILD_DIR := build
 
 all:

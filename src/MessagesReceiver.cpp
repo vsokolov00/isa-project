@@ -1,6 +1,9 @@
-//
-// Created by Vlad Sokolovskii on 28/09/2021.
-//
+/* =========================================================================================================
+   Case:      Brno University of Technology, ISA - Network Applications and Network Administration
+   Date:      TODO
+   Author:    Vladislav Sokolovskii
+   Contact:   xsokol15@stud.fit.vutbr.cz
+   ========================================================================================================== */
 
 #include "MessagesReceiver.hpp"
 
@@ -35,7 +38,7 @@ bool MessagesReceiver::set_tcp_connection(ArgumentsParser& args_parser) {
         if (open_connection(args_parser) == UNSUCCESS) {
             return false;
         }
-        //secure TLS connection via port 995
+    //secure TLS connection via port 995
     } else {
         init_context();
 
@@ -141,10 +144,12 @@ std::string MessagesReceiver::get_response(BIO* bio, bool period_indicator) {
                     response_buffer[read_data] = '\0';
                     response += response_buffer;
                     auto out = split(response, '\n');
+
+                    //ending period character
                     if (out.back() == ".\r") {
                         return response;
                     }
-                    //std::cout << response;
+
                     if (!period_indicator) {
                         return response;
                     }
@@ -216,7 +221,6 @@ bool MessagesReceiver::authorize(BIO* bio, std::string username, std::string pas
     return true;
 }
 
-//https://www.fluentcpp.com/2017/04/21/how-to-split-a-string-in-c/
 std::vector<std::string> MessagesReceiver::split(const std::string& s, char delimiter)
 {
     std::vector<std::string> tokens;
@@ -307,7 +311,6 @@ bool MessagesReceiver::delete_email(BIO *bio, int msg_number) {
 
 }
 
-//https://www.techiedelight.com/trim-string-cpp-remove-leading-trailing-spaces/
 std::string MessagesReceiver::trim(const std::string &s)
 {
     auto start = s.begin();
@@ -323,7 +326,6 @@ std::string MessagesReceiver::trim(const std::string &s)
     return std::string(start, end + 1);
 }
 
-//https://stackoverflow.com/questions/11627440/regex-c-extract-substring
 std::string MessagesReceiver::get_message_id(const std::string out) {
     std::regex rgx(".*Message-ID:\\s<.*>.*");
     std::smatch match;
@@ -333,10 +335,10 @@ std::string MessagesReceiver::get_message_id(const std::string out) {
     return nullptr;
 }
 
-bool MessagesReceiver::is_email_old(const std::string out) {
+bool MessagesReceiver::is_email_old(const std::string e_mail) {
     std::ifstream input(OLDMAILS);
     for (std::string line; getline(input, line);) {
-        if (get_message_id(out) == line) {
+        if (get_message_id(e_mail) == line) {
             return true;
         }
     }
@@ -359,4 +361,3 @@ std::string MessagesReceiver::check_email(std::string out) {
         return "";
     }
 }
-

@@ -1,3 +1,11 @@
+/* =========================================================================================================
+   Case:      Brno University of Technology, ISA - Network Applications and Network Administration
+   Date:      TODO
+   Author:    Vladislav Sokolovskii
+   Contact:   xsokol15@stud.fit.vutbr.cz
+   Description: POP3 client with the TLS support
+   ========================================================================================================== */
+
 #include <iostream>
 
 #include "ArgumentsParser.hpp"

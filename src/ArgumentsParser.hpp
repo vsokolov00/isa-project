@@ -1,5 +1,13 @@
-#pragma once
+/* =========================================================================================================
+   Case:      Brno University of Technology, ISA - Network Applications and Network Administration
+   Date:      TODO
+   Author:    Vladislav Sokolovskii
+   Contact:   xsokol15@stud.fit.vutbr.cz
+   Description: This class is responsible for the correct command line arguments parsing and storing the
+                information about the set flags and given arguments
+   ========================================================================================================== */
 
+#pragma once
 
 #include <string>
 
@@ -20,20 +28,47 @@ class ArgumentsParser {
 public:
     ~ArgumentsParser();
 
+    /**
+     * This function parses the arguments and stores their values to the private variables
+     * @param argc Numer of the arguments
+     * @param argv Array of the arguments
+     * @return Returns true if the arguments were parsed successfully, otherwise returns false
+     */
     bool args_parse(int argc, char** argv);
 
+    /**
+     * @return Returns the server address in the string format
+     */
     std::string* get_server();
 
+    /**
+     * @return Returns the port to connect to
+     */
     short get_port();
 
+    /**
+     * @return Returns the path to the authentication credentials file
+     */
     std::string* get_auth_file();
 
+    /**
+     * @return Returns the path to the folder where the e-mails should be stored
+     */
     std::string* get_out_dir();
 
+    /**
+     * @return Returns true if -T flag was set otherwise returns false
+     */
     bool is_secure();
 
+    /**
+     * @return Returns true is -d flag was set, otherwise returns false
+     */
     bool delete_flag();
 
+    /**
+     * @return Returns true is -n flag was set, otherwise returns false
+     */
     bool new_flag();
 private:
 
