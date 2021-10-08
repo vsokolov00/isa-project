@@ -11,7 +11,11 @@
 #include <iostream>
 
 ArgumentsParser::~ArgumentsParser() {
-
+    delete server;
+    delete cert_dir;
+    delete cert_file;
+    delete auth_file;
+    delete out_dir;
 }
 
 bool ArgumentsParser::args_parse(int argc, char** argv) {

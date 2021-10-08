@@ -26,7 +26,9 @@ MessagesReceiver::MessagesReceiver() {
 
 MessagesReceiver::~MessagesReceiver() {
     delete this->_server_addr;
+    free(bio);
     close(this->_tcp_socket);
+    SSL_free(this->ssl);
     SSL_CTX_free(this->_ctx);
 }
 
@@ -42,8 +44,7 @@ bool MessagesReceiver::set_tcp_connection(ArgumentsParser& args_parser) {
     } else {
         init_context();
 
-        SSL *ssl = nullptr;
-        BIO *bio = BIO_new_ssl_connect(this->_ctx);
+        bio = BIO_new_ssl_connect(this->_ctx);
 
         if (!bio) {
             std::cerr << "Connection failed." << std::endl;
