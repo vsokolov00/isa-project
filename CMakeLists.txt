@@ -4,6 +4,8 @@ project(popcl)
 
 set(CMAKE_CXX_STANDARD 14)
 
+#add_definitions(-DDEBUG)
+
 set(sources
     src/popcl.cpp
     src/ArgumentsParser.cpp

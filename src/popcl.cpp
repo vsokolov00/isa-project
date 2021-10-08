@@ -5,7 +5,7 @@
 
 
 int main(int argc, char** argv) {
-    std::cout << "Application starts." << std::endl;
+    DEBUG_PRINT("Application starts.");
 
     ArgumentsParser args_parser{};
     MessagesReceiver msg_retriever{};

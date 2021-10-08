@@ -36,43 +36,43 @@ bool ArgumentsParser::args_parse(int argc, char** argv) {
 
         switch (c) {
             case 'p':
-                std::cout << "Port is " << std::stoi(optarg) << std::endl;
+                DEBUG_PRINT("Port is " << std::stoi(optarg));
 
                 break;
             case 'T':
-                std::cout << "Secured communication (pop3s)" << std::endl;
+                DEBUG_PRINT("Secured communication (pop3s)");
                 ArgumentsParser::secure_pop3s = true;
                 break;
             case 'S':
-                std::cout << "Switch to secure (STLS)" << std::endl;
+                DEBUG_PRINT("Switch to secure (STLS)");
                 ArgumentsParser::secure_stls = true;
                 break;
             case 'c':
-                std::cout << "Credentials file " << optarg << std::endl;
+                DEBUG_PRINT("Credentials file " << optarg);
                 ArgumentsParser::cert_file = new std::string(optarg);
                 break;
             case 'C':
-                std::cout << "Credentials folder " << optarg << std::endl;
+                DEBUG_PRINT("Credentials folder " << optarg);
                 ArgumentsParser::cert_dir = new std::string(optarg);
                 break;
             case 'd':
-                std::cout << "Delete messages" << std::endl;
+                DEBUG_PRINT("Delete messages");
                 ArgumentsParser::delete_msgs = true;
                 break;
             case 'n':
-                std::cout << "Only new messages" << std::endl;
+                DEBUG_PRINT("Only new messages");
                 ArgumentsParser::only_new = true;
                 break;
             case 'a':
-                std::cout << "Auth file is " << optarg << std::endl;
+                DEBUG_PRINT("Auth file is " << optarg);
                 ArgumentsParser::auth_file = new std::string(optarg);
                 break;
             case 'o':
-                std::cout << "Output directory is " << optarg << std::endl;
+                DEBUG_PRINT("Output directory is " << optarg);
                 ArgumentsParser::out_dir = new std::string(optarg);
                 break;
             case '?':
-                std::cout << "Unknown " << c << std::endl;
+                std::cerr << "Unknown " << c << std::endl;
                 break;
             default:
                 return false;
@@ -85,7 +85,7 @@ bool ArgumentsParser::args_parse(int argc, char** argv) {
     }
 
     if (!ArgumentsParser::port) {
-        std::cout << "Port is not set" << std::endl;
+        DEBUG_PRINT("Port is not set");
         if (ArgumentsParser::secure_pop3s) {
             ArgumentsParser::port = POP3S_PORT;
         } else {
@@ -113,8 +113,13 @@ short ArgumentsParser::get_port() {
 }
 
 bool ArgumentsParser::is_secure() {
-    if(this->secure_pop3s) {
-        return true;
-    }
-    return false;
+    return this->secure_pop3s;
+}
+
+bool ArgumentsParser::delete_flag() {
+    return this->delete_msgs;
+}
+
+bool ArgumentsParser::new_flag() {
+    return this->only_new;
 }

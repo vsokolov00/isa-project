@@ -3,6 +3,15 @@
 
 #include <string>
 
+#ifdef DEBUG
+#define DEBUG_TEST 1
+#else
+#define DEBUG_TEST 0
+#endif
+
+#define DEBUG_PRINT(str) \
+            do { if (DEBUG_TEST) std::cerr << str  << std::endl;} while (0)
+
 const short POP3S_PORT = 995;
 const short POP3_PORT = 110;
 
@@ -23,6 +32,9 @@ public:
 
     bool is_secure();
 
+    bool delete_flag();
+
+    bool new_flag();
 private:
 
     //Server name (IP address)
