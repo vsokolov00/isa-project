@@ -125,10 +125,22 @@ bool ArgumentsParser::is_secure() {
     return this->secure_pop3s;
 }
 
+bool ArgumentsParser::is_stls() {
+    return this->secure_stls;
+}
+
 bool ArgumentsParser::delete_flag() {
     return this->delete_msgs;
 }
 
 bool ArgumentsParser::new_flag() {
     return this->only_new;
+}
+
+std::string *ArgumentsParser::get_cert_file() {
+    return this->cert_file;
+}
+
+std::string  *ArgumentsParser::get_cert_dir() {
+    return this->cert_dir;
 }

@@ -1,3 +1,4 @@
+
 /* =========================================================================================================
    Case:      Brno University of Technology, ISA - Network Applications and Network Administration
    Date:      TODO
@@ -25,5 +26,5 @@ int main(int argc, char** argv) {
         return EXIT_FAILURE;
     }
 
-    return 0;
+    return EXIT_SUCCESS;
 }

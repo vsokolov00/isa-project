@@ -57,9 +57,23 @@ public:
     std::string* get_out_dir();
 
     /**
+     * @return Returns path to the verification certificate file
+     */
+    std::string*  get_cert_file();
+
+    /**
+     * @return Returns path to the  folder containing verification certificates
+     */
+    std::string*  get_cert_dir();
+    /**
      * @return Returns true if -T flag was set otherwise returns false
      */
     bool is_secure();
+
+    /**
+     * @return Returns true if -S flag was set otherwise returns false
+     */
+    bool is_stls();
 
     /**
      * @return Returns true is -d flag was set, otherwise returns false
@@ -79,10 +93,10 @@ private:
     unsigned short port;
 
     //File containing credentials for SSL/TLS 
-    std::string* cert_file;
+    std::string* cert_file = nullptr;
 
     //Directory containing credentials file
-    std::string* cert_dir;
+    std::string* cert_dir = nullptr;
 
     //Delete messages flag
     bool delete_msgs = false;

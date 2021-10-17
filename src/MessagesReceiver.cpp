@@ -16,8 +16,6 @@
 
 #include <sys/socket.h>
 #include <arpa/inet.h>
-#include <openssl/err.h>
-#include <openssl/bio.h>
 
 
 MessagesReceiver::MessagesReceiver() {
@@ -26,107 +24,112 @@ MessagesReceiver::MessagesReceiver() {
 
 MessagesReceiver::~MessagesReceiver() {
     delete this->_server_addr;
-    free(bio);
     close(this->_tcp_socket);
-    SSL_free(this->ssl);
-    SSL_CTX_free(this->_ctx);
+    if (bio) BIO_reset(bio);
+    if (_ctx) SSL_CTX_free(_ctx);
 }
 
 
 bool MessagesReceiver::set_tcp_connection(ArgumentsParser& args_parser) {
+    std::string host_port = *args_parser.get_server() + ":" + std::to_string(args_parser.get_port());
 
-    //insecure connection via port 110
-    if (!args_parser.is_secure()) {
-        if (open_connection(args_parser) == UNSUCCESS) {
-            return false;
-        }
-    //secure TLS connection via port 995
-    } else {
-        init_context();
-
+    if (args_parser.is_secure()) {
+        init_context(args_parser);
         bio = BIO_new_ssl_connect(this->_ctx);
+    } else {
+        bio = BIO_new_connect(host_port.c_str());
+    }
 
-        if (!bio) {
-            std::cerr << "Connection failed." << std::endl;
-            return false;
-        }
-        std::string host_port = *args_parser.get_server() + ":" + std::to_string(args_parser.get_port());
+    if (!bio) {
+        std::cerr << "Connection failed." << std::endl;
+        return false;
+    }
 
+    if (args_parser.is_secure()) {
         BIO_get_ssl(bio, &ssl);
         SSL_set_mode(ssl, SSL_MODE_AUTO_RETRY);
         BIO_set_conn_hostname(bio, host_port.c_str());
+    }
 
-        if (BIO_do_connect(bio) <= 0) {
-            std::cerr << "Connection to the server " << args_parser.get_server()->c_str() << "failed." << std::endl;
-            return false;
-        }
-        this->_is_connected = true;
+    if (BIO_do_connect(bio) <= 0) {
+        std::cerr << "Connection to the server " << args_parser.get_server()->c_str() << " failed." << std::endl;
+        return false;
+    }
+    this->_is_connected = true;
 
+    if (args_parser.is_secure()) {
         if (ssl && SSL_get_verify_result(ssl) != X509_V_OK) {
             std::cerr << "Verification of certificates failed." << std::endl;
             return false;
         }
+    }
 
+    if (!check_response_state(get_response(bio, false))) {
+        std::cerr << "Connection to the server " << args_parser.get_server()->c_str() << " failed." << std::endl;
+        return false;
+    } else {
+        std::string stls_req = "STLS\n";
+
+        if (BIO_write(bio, stls_req.c_str(), stls_req.size()) <= 0) {
+            return false;
+        }
         if (!check_response_state(get_response(bio, false))) {
+            std::cerr << "STLS command failed or isn't supported by the server.\nA plain-text transmission will be established instead." << std::endl;
+            //goto 100
             return false;
-        }
-        auto credentials = parse_auth_file(args_parser.get_auth_file());
-        if (!authorize(bio, std::get<0>(credentials), std::get<1>(credentials))) {
-            return false;
-        }
-        int num = get_number_of_emails(bio);
-        if (num > 0) {
-            auto e_mail = save_emails(bio, num, *args_parser.get_out_dir(), args_parser);
-            std::cout << e_mail << ((e_mail == 1) ? " e-mail was " : " e-mails were ") << "downloaded" << std::endl;
-        } else {
-            std::cout << "Inbox is empty" << std::endl;
         }
 
+        init_context(args_parser);//OK
+
+        ssl = SSL_new(_ctx);
+        if (ssl == nullptr) {
+            //error!!!
+            return false;
+        }
+        SSL_set_bio(ssl, bio, bio);
+        int ret = SSL_connect(ssl);
+        if (ret <= 0) {
+            //error!!!
+            SSL_get_error(ssl, ret);
+            return false;
+        }
+        if (ssl && SSL_get_verify_result(ssl) != X509_V_OK) {
+            std::cerr << "Verification of certificates failed." << std::endl;
+            return false;
+        } else {
+            _is_tls_established = true;
+        }
+
+    }
+
+    auto credentials = parse_auth_file(args_parser);
+    if (!authorize(bio, std::get<0>(credentials), std::get<1>(credentials))) {
+        return false;
+    }
+
+    int num = get_number_of_emails(bio);
+    if (num > 0) {
+        auto e_mail = save_emails(bio, num, *args_parser.get_out_dir(), args_parser);
+        std::cout << e_mail << ((e_mail == 1) ? " e-mail was " : " e-mails were ") << "downloaded" << std::endl;
+    } else {
+        std::cout << "Inbox is empty" << std::endl;
     }
 
     return true;
 }
 
-void MessagesReceiver::init_context() {
-    const SSL_METHOD *method;
-    int verify;
-
+void MessagesReceiver::init_context(ArgumentsParser& args_parser) {
     SSL_library_init();
     OpenSSL_add_all_algorithms();
     SSL_load_error_strings();
 
     this->_ctx = SSL_CTX_new(SSLv23_client_method());
 
-    verify = SSL_CTX_set_default_verify_paths(this->_ctx);
+    int verify = set_certificate_location(args_parser);
 
     if (!verify) {
-        std::cerr << "Verification of certificates failed." << std::endl;
-        return;
+        std::cerr << "Verify contains bad value" << std::endl;
     }
-}
-
-int MessagesReceiver::open_connection(ArgumentsParser& args_parser) {
-    this->_tcp_socket = socket(AF_INET, SOCK_STREAM, 0);
-
-    if(this->_tcp_socket < 0) {
-        std::cerr << "Couldn't create a socket" << std::endl;
-        return UNSUCCESS;
-    }
-    if (!inet_aton(args_parser.get_server()->c_str(), &this->_server_addr->sin_addr)) {
-        std::cerr << "Invalid address" << std::endl;
-        return UNSUCCESS;
-    }
-    this->_server_addr->sin_family = AF_INET;
-    this->_server_addr->sin_port = htons(args_parser.get_port());
-
-    if (connect(this->_tcp_socket, (struct sockaddr*)this->_server_addr, sizeof(*this->_server_addr))) {
-        std::cerr << "Connection failed" << std::endl;
-        return UNSUCCESS;
-    }
-    std::cout << "Successful connection to the server!" << std::endl;
-    this->_is_connected = true;
-
-    return 0;
 }
 
 std::string MessagesReceiver::get_response(BIO* bio, bool period_indicator) {
@@ -139,7 +142,11 @@ std::string MessagesReceiver::get_response(BIO* bio, bool period_indicator) {
         bool read_done = false;
         while (BIO_should_retry(bio) || first_read) {
             first_read = false;
-            read_data = BIO_read(bio, response_buffer, MAX_PACKET_SIZE - 1);
+            if (_is_tls_established)
+                read_data = SSL_read(ssl, response_buffer, MAX_PACKET_SIZE - 1);
+            else
+                read_data = BIO_read(bio, response_buffer, MAX_PACKET_SIZE - 1);
+
             if (read_data >= 0) {
                 if (read_data > 0) {
                     response_buffer[read_data] = '\0';
@@ -161,30 +168,32 @@ std::string MessagesReceiver::get_response(BIO* bio, bool period_indicator) {
         }
         if (!read_done) {
             std::cerr << "Bio read error" << std::endl;
+            break;
         }
     } while (read_data);
 
     return response;
 }
 
-std::tuple<std::string, std::string> MessagesReceiver::parse_auth_file(std::string* path_to_auth_file) {
+std::tuple<std::string, std::string> MessagesReceiver::parse_auth_file(ArgumentsParser& args_parser) {
     std::string username, password;
 
-    std::string auth_file = *path_to_auth_file;
+    std::string auth_file = *args_parser.get_auth_file();
     std::ifstream infile(auth_file);
 
     if (!infile.is_open()) {
         std::cerr << "Could not open the file - '"<< auth_file << "'" << std::endl;
-        return {nullptr, nullptr};
+        return {"_bad", "_bad"};
     }
     std::string line;
 
     std::getline(infile, line);
     std::vector<std::string> splitted = split(line, '=');
-    if (trim(splitted[0]) == "username") {
+    if (splitted.size() >= 2 && trim(splitted[0]) == "username") {
         username = trim(splitted[1]);
     } else {
-        std::cerr << "Bad auth file format" << std::endl;
+        std::cerr << "Could not log in to the server " << *args_parser.get_server() << std::endl;
+        return {"_bad", "_bad"};
     }
 
     std::getline(infile, line);
@@ -203,19 +212,32 @@ bool MessagesReceiver::check_response_state(const std::string& response) {
 }
 
 bool MessagesReceiver::authorize(BIO* bio, std::string username, std::string password) {
+    if (username == "_bad" && password == "_bad") {
+        return false;
+    }
     std::string user_req = "USER " + username + "\n";
     std::string pswd_req = "PASS " + password + "\n";
 
-    if (BIO_write(bio, user_req.c_str(), user_req.size()) <= 0) {
+//    if (BIO_write(bio, user_req.c_str(), user_req.size()) <= 0) {
+//        return false;
+//    }
+    if (SSL_write(ssl, user_req.c_str(), user_req.size()) <= 0) {
+        return false;
+    }
+
+
+    if (!check_response_state(get_response(bio, false))) {
+        std::cerr << "Couldn't log in to the server." << std::endl;
+        return false;
+    }
+//    if (BIO_write(bio, pswd_req.c_str(), pswd_req.size()) <= 0) {
+//        return false;
+//    }
+    if (SSL_write(ssl, pswd_req.c_str(), pswd_req.size()) <= 0) {
         return false;
     }
     if (!check_response_state(get_response(bio, false))) {
-        return false;
-    }
-    if (BIO_write(bio, pswd_req.c_str(), pswd_req.size()) <= 0) {
-        return false;
-    }
-    if (!check_response_state(get_response(bio, false))) {
+        std::cerr << "Couldn't log in to the server." << std::endl;
         return false;
     }
 
@@ -236,7 +258,10 @@ std::vector<std::string> MessagesReceiver::split(const std::string& s, char deli
 
 int MessagesReceiver::get_number_of_emails(BIO *bio) {
     const char* str = "STAT\n";
-    BIO_write(bio, str, strlen(str));
+    if (_is_tls_established)
+        SSL_write(ssl, str, strlen(str));
+    else
+        BIO_write(bio, str, strlen(str));
     auto out = split(get_response(bio, false), ' ');
     return std::stoi(out[1]);
 }
@@ -252,7 +277,12 @@ int MessagesReceiver::save_emails(BIO *bio, int total, const std::string& output
         std::string file_name = "mail-";
         std::string req = "RETR ";
         req += std::to_string(i) + "\n";
-        BIO_write(bio, req.c_str(), req.size());
+
+        if (_is_tls_established)
+            SSL_write(ssl, req.c_str(), req.size());
+        else
+            BIO_write(bio, req.c_str(), req.size());
+
         file_name += std::to_string(i);
 
         std::string out = get_response(bio, true);
@@ -260,6 +290,13 @@ int MessagesReceiver::save_emails(BIO *bio, int total, const std::string& output
         if (args_parser.new_flag() && is_email_old(out)) {
             continue;
         }
+
+        std::string response = out.substr(0, out.find('\n'));
+        if (!check_response_state(response)) {
+            continue;
+        }
+        auto from = out.find('\n') + 1;
+        out = out.substr(from, out.size() - from - FINAL_PERIOD);
 
         std::fstream outfile;
         outfile.open(output_dir + "/" + file_name , std::ios_base::out);
@@ -286,7 +323,14 @@ int MessagesReceiver::save_emails(BIO *bio, int total, const std::string& output
     }
 
     std::string req = "QUIT\n";
-    BIO_write(bio, req.c_str(), req.size());
+
+
+    if (_is_tls_established)
+        SSL_write(ssl, req.c_str(), req.size());
+    else
+        BIO_write(bio, req.c_str(), req.size());
+
+
     if(get_response(bio, false) == "DONE\r\n") {
         DEBUG_PRINT("State updated");
     }
@@ -299,7 +343,11 @@ bool MessagesReceiver::delete_email(BIO *bio, int msg_number) {
         std::string req = "DELE ";
         req += std::to_string(msg_number) + "\n";
 
-        BIO_write(bio, req.c_str(), req.size());
+        if (_is_tls_established)
+            SSL_write(ssl, req.c_str(), req.size());
+        else
+            BIO_write(bio, req.c_str(), req.size());
+
         if (!check_response_state(get_response(bio, false))) {
             std::cerr << "Couldn't delete a message" << std::endl;
             return false;
@@ -314,7 +362,12 @@ bool MessagesReceiver::delete_email(BIO *bio, int msg_number) {
 
 std::string MessagesReceiver::trim(const std::string &s)
 {
-    auto start = s.begin();
+    std::vector<char>::const_iterator start;
+    if (!s.empty()) {
+        start = s.begin();
+    } else {
+        return nullptr;
+    }
     while (start != s.end() && std::isspace(*start)) {
         start++;
     }
@@ -328,10 +381,10 @@ std::string MessagesReceiver::trim(const std::string &s)
 }
 
 std::string MessagesReceiver::get_message_id(const std::string out) {
-    std::regex rgx(".*Message-ID:\\s<.*>.*");
+    std::regex pattern(".*Message-ID:\\s<.*>.*", std::regex_constants::icase);
     std::smatch match;
 
-    if (std::regex_search(out.begin(), out.end(), match, rgx))
+    if (std::regex_search(out.begin(), out.end(), match, pattern))
         return split(match[0], ' ')[1];
     return nullptr;
 }
@@ -361,4 +414,20 @@ std::string MessagesReceiver::check_email(std::string out) {
     } else {
         return "";
     }
+}
+
+int MessagesReceiver::set_certificate_location(ArgumentsParser& args_parser) {
+    int verify;
+
+    if (args_parser.get_cert_dir() && args_parser.get_cert_file()) {
+        verify = SSL_CTX_load_verify_locations(this->_ctx, args_parser.get_cert_file()->c_str(), args_parser.get_cert_dir()->c_str());
+    } else if (args_parser.get_cert_dir()) {
+        verify = SSL_CTX_load_verify_locations(this->_ctx, nullptr, args_parser.get_cert_dir()->c_str());
+    } else if (args_parser.get_cert_file()) {
+        verify = SSL_CTX_load_verify_locations(this->_ctx, args_parser.get_cert_file()->c_str(), nullptr);
+    } else {
+        verify = SSL_CTX_set_default_verify_paths(this->_ctx);
+    }
+
+    return verify;
 }

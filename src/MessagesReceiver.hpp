@@ -13,12 +13,16 @@
 #include <thread>
 #include <queue>
 #include <openssl/ssl.h>
+#include <openssl/err.h>
+#include <openssl/bio.h>
 
 #include "ArgumentsParser.hpp"
 
 #define MAX_PACKET_SIZE 4096
 
 #define UNSUCCESS -1
+
+#define FINAL_PERIOD 3
 
 #define OLDMAILS ".oldmails"
 
@@ -42,6 +46,7 @@ private:
     SSL_CTX* _ctx;
     struct sockaddr_in* _server_addr;
     bool _is_connected;
+    bool _is_tls_established;
 
     /**
      *
@@ -55,21 +60,14 @@ private:
     /**
      * This function initialize the SSL context
      */
-    void init_context();
-
-    /**
-     * TODO
-     * @param args_parser
-     * @return
-     */
-    int open_connection(ArgumentsParser& args_parser);
+    void init_context(ArgumentsParser& args_parser);
 
     /**
      * This function parses the file containing authentication credentials
-     * @param path_to_auth_file - file should be in the expected format (see the assignment)
+     * @param args_parser - TODO
      * @return Returns the tuple containing username and password for server authentication
      */
-    std::tuple<std::string, std::string> parse_auth_file(std::string* path_to_auth_file);
+    std::tuple<std::string, std::string> parse_auth_file(ArgumentsParser& args_parser);
 
     /**
      * This function checks the prefix of the server response.
@@ -136,6 +134,14 @@ private:
      * otherwise returns the message id of the e-mail
      */
     std::string check_email(std::string e_mail);
+
+    /**
+     * TODO
+     * @param ctx
+     * @param args_parser
+     * @return
+     */
+    int set_certificate_location(ArgumentsParser& args_parser);
 
 
     /**
