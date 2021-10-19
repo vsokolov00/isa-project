@@ -29,7 +29,6 @@ MessagesReceiver::~MessagesReceiver() {
     if (_ctx) SSL_CTX_free(_ctx);
 }
 
-
 bool MessagesReceiver::set_tcp_connection(ArgumentsParser& args_parser) {
     std::string host_port = *args_parser.get_server() + ":" + std::to_string(args_parser.get_port());
 
@@ -292,12 +291,11 @@ int MessagesReceiver::save_emails(BIO *bio, int total, const std::string& output
             DEBUG_PRINT("Done writing " << file_name);
             successfully_saved++;
 
-            old_emails_db << check_email(out) << std::endl;
+            std::string msg_id = check_email(out);
+            if (!msg_id.empty()) { old_emails_db << msg_id << std::endl; }
 
             if(args_parser.delete_flag()) {
-                if(delete_email(bio, i)) {
-                    DEBUG_PRINT(file_name << " was deleted");
-                }
+                if(delete_email(bio, i)) { DEBUG_PRINT(file_name << " was deleted"); }
             }
         }
         outfile.close();
