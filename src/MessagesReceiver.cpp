@@ -105,6 +105,7 @@ bool MessagesReceiver::set_tcp_connection(ArgumentsParser& args_parser) {
 
     int num = get_number_of_emails(bio);
     if (num > 0) {
+        //PROCESS THE EMAILS
         auto e_mail = save_emails(bio, num, *args_parser.get_out_dir(), args_parser);
         std::cout << e_mail << ((e_mail == 1) ? " e-mail was " : " e-mails were ") << "downloaded" << std::endl;
     } else {
@@ -180,7 +181,7 @@ std::tuple<std::string, std::string> MessagesReceiver::parse_auth_file(Arguments
 
     if (!infile.is_open()) {
         std::cerr << "Could not open the file - '"<< auth_file << "'" << std::endl;
-        return {"_bad", "_bad"};
+        return {"!bad", "!bad"};
     }
     std::string line;
 
@@ -189,8 +190,8 @@ std::tuple<std::string, std::string> MessagesReceiver::parse_auth_file(Arguments
     if (splitted.size() >= 2 && trim(splitted[0]) == "username") {
         username = trim(splitted[1]);
     } else {
-        std::cerr << "Could not log in to the server " << *args_parser.get_server() << std::endl;
-        return {"_bad", "_bad"};
+        std::cerr << "Bad auth file format" << std::endl;
+        return {"!bad", "!bad"};
     }
 
     std::getline(infile, line);
@@ -199,6 +200,7 @@ std::tuple<std::string, std::string> MessagesReceiver::parse_auth_file(Arguments
         password = trim(splitted[1]);
     } else {
         std::cerr << "Bad auth file format" << std::endl;
+        return {"!bad", "!bad"};
     }
 
     return {username, password};
@@ -209,7 +211,7 @@ bool MessagesReceiver::check_response_state(const std::string& response) {
 }
 
 bool MessagesReceiver::authorize(BIO* bio, std::string username, std::string password) {
-    if (username == "_bad" && password == "_bad") {
+    if (username == "!bad" && password == "!bad") {
         return false;
     }
     std::string user_req = "USER " + username + "\n";
@@ -237,10 +239,10 @@ std::vector<std::string> MessagesReceiver::split(const std::string& s, char deli
     std::vector<std::string> tokens;
     std::string token;
     std::istringstream tokenStream(s);
-    while (std::getline(tokenStream, token, delimiter))
-    {
+    while (std::getline(tokenStream, token, delimiter)) {
         tokens.push_back(token);
     }
+
     return tokens;
 }
 
