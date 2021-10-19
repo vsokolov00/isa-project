@@ -30,7 +30,7 @@ MessagesReceiver::~MessagesReceiver() {
 }
 
 bool MessagesReceiver::set_tcp_connection(ArgumentsParser& args_parser) {
-    std::string host_port = *args_parser.get_server() + ":" + std::to_string(args_parser.get_port());
+     std::string host_port = *args_parser.get_server() + ":" + std::to_string(args_parser.get_port());
 
     if (args_parser.is_secure()) {
         init_context(args_parser);
@@ -285,7 +285,8 @@ int MessagesReceiver::save_emails(BIO *bio, int total, const std::string& output
         outfile.open(output_dir + "/" + file_name , std::ios_base::out);
 
         if (!outfile.is_open()) {
-            std::cerr << "Failed to open " << file_name << '\n';
+            std::cerr << "Failed to open output directory " << output_dir << ", directory must exist!\n";
+            return 0;
         } else {
             outfile << out;
             DEBUG_PRINT("Done writing " << file_name);

@@ -19,77 +19,73 @@ ArgumentsParser::~ArgumentsParser() {
 }
 
 bool ArgumentsParser::args_parse(int argc, char** argv) {
-    int c;
-    server = new std::string (argv[1]);
-
-    while(true) {
-        int option_index = 0;
-        std::string  ss;
-        static struct option long_options[] = {
-                {0,     required_argument,          0,                                                     0 },
-                {"port",  no_argument,              0,                                                     'p' },
-                {"delete",  no_argument,              0,                                                     'd' },
-                {"new",  no_argument,              0,                                                     'n' },
-                {0, no_argument,                    0,                                                     'T' },
-                {0, no_argument,                    0,                                                     'S' },
-                {0, required_argument,              0,                                                     'C' },
-                {"credentials",  required_argument, 0,                                                     'c'},
-                {"auth-file",    required_argument, 0,                                                     'a' },
-                {"out-dir",    required_argument,   0,                                                     'o' },
-                {0,         0,                      0,                                                     0 }
-        };
-
-        c = getopt_long(argc, argv, "p:dnTSC:c:a:o:", long_options, &option_index);
-        if (c == -1)
-            break;
-
-        switch (c) {
-            case 'p':
-                DEBUG_PRINT("Port is " << std::stoi(optarg));
-                ArgumentsParser::port = std::stoi(optarg);
-                break;
-            case 'T':
-                DEBUG_PRINT("Secured communication (pop3s)");
-                ArgumentsParser::secure_pop3s = true;
-                break;
-            case 'S':
-                DEBUG_PRINT("Switch to secure (STLS)");
-                ArgumentsParser::secure_stls = true;
-                break;
-            case 'c':
-                DEBUG_PRINT("Credentials file " << optarg);
-                ArgumentsParser::cert_file = new std::string(optarg);
-                break;
-            case 'C':
-                DEBUG_PRINT("Credentials folder " << optarg);
-                ArgumentsParser::cert_dir = new std::string(optarg);
-                break;
-            case 'd':
-                DEBUG_PRINT("Delete messages");
-                ArgumentsParser::delete_msgs = true;
-                break;
-            case 'n':
-                DEBUG_PRINT("Only new messages");
-                ArgumentsParser::only_new = true;
-                break;
-            case 'a':
-                DEBUG_PRINT("Auth file is " << optarg);
-                ArgumentsParser::auth_file = new std::string(optarg);
-                break;
-            case 'o':
-                DEBUG_PRINT("Output directory is " << optarg);
-                ArgumentsParser::out_dir = new std::string(optarg);
-                break;
-            case '?':
-                std::cerr << "Unknown " << c << std::endl;
-                break;
-            default:
-                return false;
+    if (argc < 3 || argc > 10) {
+        USAGE;
+        return false;
+    } else {
+        if (argv[1][0] == '-') {
+            std::cerr << "Server isn't specified!" << std::endl;
+            USAGE;
+            return false;
+        } else {
+            server = new std::string(argv[1]);
+        }
+        for (int i = 2; i < argc; ++i) {
+            switch (argv[i][1]) {
+                case 'p':
+                    CHECK_IF_HAS_ARG(i);
+                    DEBUG_PRINT("Port is " << std::stoi(argv[i+1]));
+                    ArgumentsParser::port = std::stoi(argv[++i]);
+                    break;
+                case 'd':
+                    DEBUG_PRINT("Delete messages");
+                    ArgumentsParser::delete_msgs = true;
+                    break;
+                case 'n':
+                    DEBUG_PRINT("Only new messages");
+                    ArgumentsParser::only_new = true;
+                    break;
+                case 'T':
+                    DEBUG_PRINT("Secured communication (pop3s)");
+                    ArgumentsParser::secure_pop3s = true;
+                    break;
+                case 'S':
+                    DEBUG_PRINT("Switch to secure (STLS)");
+                    ArgumentsParser::secure_stls = true;
+                    break;
+                case 'c':
+                    CHECK_IF_HAS_ARG(i)
+                    DEBUG_PRINT("Credentials file " << argv[i+1]);
+                    ArgumentsParser::cert_file = new std::string(argv[++i]);
+                    break;
+                case 'C':
+                    CHECK_IF_HAS_ARG(i);
+                    DEBUG_PRINT("Credentials folder " << argv[i+1]);
+                    ArgumentsParser::cert_dir = new std::string(argv[++i]);
+                    break;
+                case 'o':
+                    CHECK_IF_HAS_ARG(i);
+                    DEBUG_PRINT("Output directory is " << argv[i+1]);
+                    ArgumentsParser::out_dir = new std::string(argv[++i]);
+                    break;
+                case 'a':
+                    DEBUG_PRINT("Auth file is " << argv[i+1]);
+                    ArgumentsParser::auth_file = new std::string(argv[++i]);
+                    break;
+                default:
+                    USAGE;
+                    return false;
+            }
         }
     }
 
     if (ArgumentsParser::secure_stls && ArgumentsParser::secure_pop3s) {
         std::cerr << "Only one of (-T | -S) flags can be set" << std::endl;
+        return false;
+    }
+
+    if (!ArgumentsParser::out_dir || !ArgumentsParser::auth_file) {
+        USAGE;
         return false;
     }
 

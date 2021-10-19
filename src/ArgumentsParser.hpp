@@ -17,6 +17,19 @@
 #define DEBUG_TEST 0
 #endif
 
+#define USAGE { \
+    std::cout << "Usage: popcl <server> [-p <port>] [-T|-S [-c <certfile>] [-C <certaddr>]] [-d] [-n] -a <auth_file> -o <out_dir>"; \
+}
+
+
+#define CHECK_IF_HAS_ARG(curr_arg) { \
+    if (curr_arg + 1 >= argc || argv[curr_arg + 1][0] == '-') { \
+        std::cerr << "Option " << argv[curr_arg] << " doesn't have an argument." << std::endl; \
+        USAGE;                             \
+        return false;                             \
+    }                                \
+}
+
 #define DEBUG_PRINT(str) \
             do { if (DEBUG_TEST) std::cerr << str  << std::endl;} while (0)
 
@@ -87,7 +100,7 @@ public:
 private:
 
     //Server name (IP address)
-    std::string* server;
+    std::string* server = nullptr;
 
     //Optional port number
     unsigned short port;
