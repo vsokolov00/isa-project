@@ -46,7 +46,7 @@ bool ArgumentsParser::args_parse(int argc, char** argv) {
         switch (c) {
             case 'p':
                 DEBUG_PRINT("Port is " << std::stoi(optarg));
-
+                ArgumentsParser::port = std::stoi(optarg);
                 break;
             case 'T':
                 DEBUG_PRINT("Secured communication (pop3s)");

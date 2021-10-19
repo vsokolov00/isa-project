@@ -26,6 +26,19 @@
 
 #define OLDMAILS ".oldmails"
 
+//std::string
+#define SEND_REQUEST(request) { \
+    if (_is_tls_established) { \
+        if (SSL_write(ssl, request.c_str(), request.size()) <= 0) { \
+            return false; \
+        }          \
+    } else { \
+        if (BIO_write(bio, request.c_str(), request.size()) <= 0) { \
+            return false; \
+        } \
+    } \
+}
+
 
 class MessagesReceiver {
 public:
@@ -47,6 +60,7 @@ private:
     struct sockaddr_in* _server_addr;
     bool _is_connected;
     bool _is_tls_established;
+
 
     /**
      *
