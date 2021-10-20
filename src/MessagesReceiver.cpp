@@ -24,9 +24,9 @@ MessagesReceiver::MessagesReceiver() {
 
 MessagesReceiver::~MessagesReceiver() {
     delete this->_server_addr;
-    close(this->_tcp_socket);
     if (bio) BIO_reset(bio);
     if (_ctx) SSL_CTX_free(_ctx);
+    if (ssl) SSL_free(ssl);
 }
 
 bool MessagesReceiver::set_tcp_connection(ArgumentsParser& args_parser) {
