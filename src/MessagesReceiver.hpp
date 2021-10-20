@@ -58,8 +58,8 @@ private:
     SSL *ssl = nullptr;
     SSL_CTX* _ctx;
     struct sockaddr_in* _server_addr;
-    bool _is_connected;
-    bool _is_tls_established;
+    bool _is_connected = false;
+    bool _is_tls_established = false;
 
 
     /**

@@ -147,10 +147,12 @@ std::string MessagesReceiver::get_response(bool period_indicator) {
         bool read_done = false;
         while (BIO_should_retry(bio) || first_read) {
             first_read = false;
-            if (_is_tls_established)
+            if (_is_tls_established) {
                 read_data = SSL_read(ssl, response_buffer, MAX_PACKET_SIZE - 1);
-            else
+            }
+            else {
                 read_data = BIO_read(bio, response_buffer, MAX_PACKET_SIZE - 1);
+            }
 
             if (read_data >= 0) {
                 if (read_data > 0) {
