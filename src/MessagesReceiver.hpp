@@ -74,7 +74,7 @@ private:
     /**
      * This function initialize the SSL context
      */
-    void init_context(ArgumentsParser& args_parser);
+    bool init_context(ArgumentsParser& args_parser);
 
     /**
      * This function parses the file containing authentication credentials

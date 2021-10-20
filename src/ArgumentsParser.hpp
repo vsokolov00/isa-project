@@ -14,7 +14,7 @@
 #ifdef DEBUG
 #define DEBUG_TEST 1
 #else
-#define DEBUG_TEST 0
+#define DEBUG_TEST 1
 #endif
 
 #define USAGE { \

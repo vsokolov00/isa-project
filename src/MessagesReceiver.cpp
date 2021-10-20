@@ -33,7 +33,9 @@ bool MessagesReceiver::set_tcp_connection(ArgumentsParser& args_parser) {
      std::string host_port = *args_parser.get_server() + ":" + std::to_string(args_parser.get_port());
 
     if (args_parser.is_secure()) {
-        init_context(args_parser);
+        if (!init_context(args_parser)) {
+            return false;
+        }
         bio = BIO_new_ssl_connect(this->_ctx);
     } else {
         bio = BIO_new_connect(host_port.c_str());
@@ -76,7 +78,9 @@ bool MessagesReceiver::set_tcp_connection(ArgumentsParser& args_parser) {
         if (!check_response_state(get_response(bio, false))) {
             std::cerr << "WARNING: STLS command failed or isn't supported by the server.\nWARNING: A plain-text transmission will be established instead." << std::endl;
         } else {
-            init_context(args_parser);
+            if (!init_context(args_parser)) {
+                return false;
+            }
 
             if (!(ssl = SSL_new(_ctx))) {
                 std::cerr << "The creation of a new SSL structure failed." << std::endl;
@@ -115,19 +119,22 @@ bool MessagesReceiver::set_tcp_connection(ArgumentsParser& args_parser) {
     return true;
 }
 
-void MessagesReceiver::init_context(ArgumentsParser& args_parser) {
+bool MessagesReceiver::init_context(ArgumentsParser& args_parser) {
     SSL_library_init();
     OpenSSL_add_all_algorithms();
     SSL_load_error_strings();
 
     if (this->_ctx = SSL_CTX_new(SSLv23_client_method()), !this->_ctx) {
         std::cerr << "The creation of a new SSL_CTX object failed." << std::endl;
+        return false;
     }
 
     int verify = set_certificate_location(args_parser);
     if (!verify) {
         std::cerr << "Verify contains bad value" << std::endl;//TODO
+        return false;
     }
+    return true;
 }
 
 std::string MessagesReceiver::get_response(BIO* bio, bool period_indicator) {
@@ -218,8 +225,6 @@ bool MessagesReceiver::authorize(BIO* bio, std::string username, std::string pas
     std::string pswd_req = "PASS " + password + "\n";
 
     SEND_REQUEST(user_req);
-
-
     if (!check_response_state(get_response(bio, false))) {
         std::cerr << "Couldn't log in to the server." << std::endl;
         return false;
@@ -254,7 +259,6 @@ int MessagesReceiver::get_number_of_emails(BIO *bio) {
     return std::stoi(out[1]);
 }
 
-//check if out_dir ends with /
 int MessagesReceiver::save_emails(BIO *bio, int total, const std::string& output_dir, ArgumentsParser& args_parser) {
     int successfully_saved = 0;
     std::fstream old_emails_db;
@@ -272,12 +276,15 @@ int MessagesReceiver::save_emails(BIO *bio, int total, const std::string& output
 
         std::string out = get_response(bio, true);
 
+        //email was downloaded before, and -n flag is set
         if (args_parser.new_flag() && is_email_old(out)) {
+            DEBUG_PRINT("Email isn't new");
             continue;
         }
 
         std::string response = out.substr(0, out.find('\n'));
         if (!check_response_state(response)) {
+            std::cerr << "Failed to download email #" << file_name << std::endl;
             continue;
         }
         auto from = out.find('\n') + 1;
