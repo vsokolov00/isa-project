@@ -65,7 +65,7 @@ bool MessagesReceiver::set_tcp_connection(ArgumentsParser& args_parser) {
         }
     }
 
-    if (!check_response_state(get_response(bio, false))) {
+    if (!check_response_state(get_response(false))) {
         std::cerr << "Connection to the server " << args_parser.get_server()->c_str() << " failed." << std::endl;
         return false;
     }
@@ -75,7 +75,7 @@ bool MessagesReceiver::set_tcp_connection(ArgumentsParser& args_parser) {
         if (BIO_write(bio, stls_req.c_str(), stls_req.size()) <= 0) {
             return false;
         }
-        if (!check_response_state(get_response(bio, false))) {
+        if (!check_response_state(get_response(false))) {
             std::cerr << "WARNING: STLS command failed or isn't supported by the server.\nWARNING: A plain-text transmission will be established instead." << std::endl;
         } else {
             if (!init_context(args_parser)) {
@@ -137,7 +137,7 @@ bool MessagesReceiver::init_context(ArgumentsParser& args_parser) {
     return true;
 }
 
-std::string MessagesReceiver::get_response(BIO* bio, bool period_indicator) {
+std::string MessagesReceiver::get_response(bool period_indicator) {
     int read_data = 0;
     char response_buffer[MAX_PACKET_SIZE] = {'\0'};
     std::string response;
@@ -225,13 +225,13 @@ bool MessagesReceiver::authorize(BIO* bio, std::string username, std::string pas
     std::string pswd_req = "PASS " + password + "\n";
 
     SEND_REQUEST(user_req);
-    if (!check_response_state(get_response(bio, false))) {
+    if (!check_response_state(get_response(false))) {
         std::cerr << "Couldn't log in to the server." << std::endl;
         return false;
     }
 
     SEND_REQUEST(pswd_req);
-    if (!check_response_state(get_response(bio, false))) {
+    if (!check_response_state(get_response(false))) {
         std::cerr << "Couldn't log in to the server." << std::endl;
         return false;
     }
@@ -254,7 +254,7 @@ std::vector<std::string> MessagesReceiver::split(const std::string& s, char deli
 int MessagesReceiver::get_number_of_emails(BIO *bio) {
     std::string req = "STAT\n";
     SEND_REQUEST(req);
-    auto out = split(get_response(bio, false), ' ');
+    auto out = split(get_response(false), ' ');
 
     return std::stoi(out[1]);
 }
@@ -274,7 +274,7 @@ int MessagesReceiver::save_emails(BIO *bio, int total, const std::string& output
 
         file_name += std::to_string(i);
 
-        std::string out = get_response(bio, true);
+        std::string out = get_response(true);
 
         //email was downloaded before, and -n flag is set
         if (args_parser.new_flag() && is_email_old(out)) {
@@ -318,7 +318,7 @@ int MessagesReceiver::save_emails(BIO *bio, int total, const std::string& output
 
     SEND_REQUEST(req);
 
-    if(get_response(bio, false) == "DONE\r\n") {
+    if(get_response(false) == "DONE\r\n") {
         DEBUG_PRINT("State updated");
     }
 
@@ -332,7 +332,7 @@ bool MessagesReceiver::delete_email(BIO *bio, int msg_number) {
 
         SEND_REQUEST(req)
 
-        if (!check_response_state(get_response(bio, false))) {
+        if (!check_response_state(get_response(false))) {
             std::cerr << "Couldn't delete a message" << std::endl;
             return false;
         }

@@ -69,7 +69,7 @@ private:
      * otherwise it should be set to false
      * @return Returns the server response in the string format
      */
-    std::string get_response(BIO* bio, bool period_indicator);
+    std::string get_response(bool period_indicator);
 
     /**
      * This function initialize the SSL context
