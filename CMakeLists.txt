@@ -12,7 +12,15 @@ project(popcl)
 
 set(CMAKE_CXX_STANDARD 14)
 
-set(CMAKE_CXX_COMPILER /usr/local/bin/g++)
+if(UNIX AND NOT APPLE)
+    set(CMAKE_CXX_COMPILER /usr/local/bin/g++)
+endif()
+
+if (APPLE)
+    set(OPENSSL_INCLUDE_DIR /usr/local/Cellar/openssl@3/3.0.0/include)
+endif()
+
+
 
 # If set then program will be outputting some helping/additional information
 #add_definitions(-DDEBUG)
