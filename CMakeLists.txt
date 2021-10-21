@@ -12,6 +12,8 @@ project(popcl)
 
 set(CMAKE_CXX_STANDARD 14)
 
+set(CMAKE_CXX_COMPILER /usr/local/bin/g++)
+
 # If set then program will be outputting some helping/additional information
 #add_definitions(-DDEBUG)
 

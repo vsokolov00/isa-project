@@ -14,6 +14,7 @@
 
 
 int main(int argc, char** argv) {
+    //to enable debug helping messages see CMakeLists.txt file
     DEBUG_PRINT("Application starts.");
 
     ArgumentsParser args_parser{};

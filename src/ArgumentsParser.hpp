@@ -14,14 +14,15 @@
 #ifdef DEBUG
 #define DEBUG_TEST 1
 #else
-#define DEBUG_TEST 1
+#define DEBUG_TEST 0
 #endif
 
+//prints the usage message
 #define USAGE { \
     std::cout << "Usage: popcl <server> [-p <port>] [-T|-S [-c <certfile>] [-C <certaddr>]] [-d] [-n] -a <auth_file> -o <out_dir>"; \
 }
 
-
+//macro is used to check whether the CLI option on the 'curr_arg' position has a valid argument
 #define CHECK_IF_HAS_ARG(curr_arg) { \
     if (curr_arg + 1 >= argc || argv[curr_arg + 1][0] == '-') { \
         std::cerr << "Option " << argv[curr_arg] << " doesn't have an argument." << std::endl; \

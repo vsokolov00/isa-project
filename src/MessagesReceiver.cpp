@@ -19,11 +19,9 @@
 
 
 MessagesReceiver::MessagesReceiver() {
-    this->_server_addr = new sockaddr_in;
 }
 
 MessagesReceiver::~MessagesReceiver() {
-    delete this->_server_addr;
     if (bio) BIO_reset(bio);
     if (_ctx) SSL_CTX_free(_ctx);
     if (ssl) SSL_free(ssl);

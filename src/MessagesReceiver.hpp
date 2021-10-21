@@ -53,11 +53,10 @@ public:
     bool set_tcp_connection(ArgumentsParser&);
 
 private:
-    int _tcp_socket;
     BIO *bio;
     SSL *ssl = nullptr;
     SSL_CTX* _ctx;
-    struct sockaddr_in* _server_addr;
+
     bool _is_connected = false;
     bool _is_tls_established = false;
 
