@@ -108,6 +108,17 @@ bool MessagesReceiver::set_tcp_connection(ArgumentsParser& args_parser) {
     int num = get_number_of_emails(bio);
     if (num > 0) {
         //PROCESS THE EMAILS
+        if (num > 200) {
+            std::string  answer;
+            std::cout << "Downloading " << num << " of emails will take a while." << std::endl;
+            std::cout << "Are you sure you want to continue? (y/n): ";
+            std::cin >> answer;
+            if (answer[0] != 'y') {
+                return true;
+            } else {
+                std::cout << "Downloading " << num << " emails..." << std::endl;
+            }
+        }
         auto e_mail = save_emails(bio, num, *args_parser.get_out_dir(), args_parser);
         std::cout << e_mail << ((e_mail == 1) ? " e-mail was " : " e-mails were ") << "downloaded" << std::endl;
     } else {
@@ -365,7 +376,7 @@ std::string MessagesReceiver::get_message_id(const std::string out) {
 
     if (std::regex_search(out.begin(), out.end(), match, pattern))
         return split(match[0], ' ')[1];
-    return nullptr;
+    return "";
 }
 
 bool MessagesReceiver::is_email_old(const std::string e_mail) {
@@ -381,6 +392,9 @@ bool MessagesReceiver::is_email_old(const std::string e_mail) {
 std::string MessagesReceiver::check_email(std::string out) {
     bool is_new = true;
     std::string msg_id = get_message_id(out);
+    if (msg_id.empty()) {
+        return "";
+    }
     std::ifstream input(OLDMAILS);
     for (std::string line; getline(input, line);) {
         if (msg_id == line) {

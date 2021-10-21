@@ -19,7 +19,7 @@
 
 //prints the usage message
 #define USAGE { \
-    std::cout << "Usage: popcl <server> [-p <port>] [-T|-S [-c <certfile>] [-C <certaddr>]] [-d] [-n] -a <auth_file> -o <out_dir>"; \
+    std::cout << "Usage: popcl <server> [-p <port>] [-T|-S [-c <certfile>] [-C <certaddr>]] [-d] [-n] -a <auth_file> -o <out_dir>" << std::endl; \
 }
 
 //macro is used to check whether the CLI option on the 'curr_arg' position has a valid argument
