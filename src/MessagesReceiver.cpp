@@ -56,10 +56,16 @@ bool MessagesReceiver::set_tcp_connection(ArgumentsParser& args_parser) {
     }
     this->_is_connected = true;
 
+
     if (args_parser.is_secure()) {
-        if (ssl && SSL_get_verify_result(ssl) != X509_V_OK) {
-            std::cerr << "Verification of certificates failed." << std::endl;
+        if (!SSL_get_peer_certificate(ssl)) {
+            std::cout << "No certificate was presented by the peer or no connection was established" << std::endl;
             return false;
+        } else {
+            if (ssl && SSL_get_verify_result(ssl) != X509_V_OK) {
+                std::cerr << "Verification of certificates failed." << std::endl;
+                return false;
+            }
         }
     }
 
@@ -119,6 +125,8 @@ bool MessagesReceiver::set_tcp_connection(ArgumentsParser& args_parser) {
                 std::cout << "Downloading " << num << " emails..." << std::endl;
             }
         }
+        signal(SIGINT, signal_handler);
+        signal(SIGTERM, signal_handler);
         auto e_mail = save_emails(bio, num, *args_parser.get_out_dir(), args_parser);
         std::cout << e_mail << ((e_mail == 1) ? " e-mail was " : " e-mails were ") << "downloaded" << std::endl;
     } else {
@@ -423,4 +431,10 @@ int MessagesReceiver::set_certificate_location(ArgumentsParser& args_parser) {
     }
 
     return verify;
+}
+
+void signal_handler(int signal) {
+    std::cout << "\nSignal " << signal << " was caught" << std::endl;
+
+    exit(EXIT_SUCCESS);
 }

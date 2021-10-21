@@ -10,7 +10,7 @@
 #pragma once
 
 #include <atomic>
-#include <thread>
+#include <csignal>
 #include <queue>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
@@ -24,6 +24,7 @@
 
 #define FINAL_PERIOD 3
 
+//
 #define OLDMAILS ".oldmails"
 
 //std::string
@@ -47,8 +48,8 @@ public:
     ~MessagesReceiver();
 
     /**
-     * TODO
-     * @return
+     * This function establishes TCP communication according to the given parameters (-T|-S)
+     * @return Returns true if everything went as expected, otherwise returns false
      */
     bool set_tcp_connection(ArgumentsParser&);
 
@@ -149,7 +150,7 @@ private:
     std::string check_email(std::string e_mail);
 
     /**
-     * TODO
+     * This function sets the
      * @param ctx
      * @param args_parser
      * @return
@@ -172,3 +173,5 @@ private:
      */
     std::string trim(const std::string &s);
 };
+
+void signal_handler(int signal);
