@@ -11,6 +11,7 @@
 
 #include <csignal>
 #include <map>
+#include <vector>
 
 #include <openssl/ssl.h>
 #include <openssl/err.h>
