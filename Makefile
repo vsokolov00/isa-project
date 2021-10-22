@@ -8,7 +8,7 @@
 
 BUILD_DIR := build
 
-CMAKE_COMMAND = cmake -DCMAKE_BUILD_TYPE=Debug ..
+CMAKE_COMMAND = cmake -DCMAKE_BUILD_TYPE=Release ..
 
 all:
 	mkdir -p ${BUILD_DIR}

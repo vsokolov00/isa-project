@@ -17,9 +17,8 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 
-
-MessagesReceiver::MessagesReceiver() {
-}
+std::map<std::string, bool> old_mails;
+int successfully_saved;
 
 MessagesReceiver::~MessagesReceiver() {
     if (bio) BIO_reset(bio);
@@ -29,9 +28,10 @@ MessagesReceiver::~MessagesReceiver() {
 
 bool MessagesReceiver::set_tcp_connection(ArgumentsParser& args_parser) {
      std::string host_port = *args_parser.get_server() + ":" + std::to_string(args_parser.get_port());
+     this->args_parser = &args_parser;
 
     if (args_parser.is_secure()) {
-        if (!init_context(args_parser)) {
+        if (!init_context()) {
             return false;
         }
         bio = BIO_new_ssl_connect(this->_ctx);
@@ -82,7 +82,7 @@ bool MessagesReceiver::set_tcp_connection(ArgumentsParser& args_parser) {
         if (!check_response_state(get_response(false))) {
             std::cerr << "WARNING: STLS command failed or isn't supported by the server.\nWARNING: A plain-text transmission will be established instead." << std::endl;
         } else {
-            if (!init_context(args_parser)) {
+            if (!init_context()) {
                 return false;
             }
 
@@ -96,6 +96,7 @@ bool MessagesReceiver::set_tcp_connection(ArgumentsParser& args_parser) {
                 std::cerr << "The TLS/SSL handshake was not successful" << std::endl;
                 return false;
             }
+            //if (!SSL_get_peer_certificate(ssl)) {
             if (ssl && SSL_get_verify_result(ssl) != X509_V_OK) {
                 std::cerr << "Verification of certificates failed." << std::endl;
                 return false;
@@ -106,29 +107,19 @@ bool MessagesReceiver::set_tcp_connection(ArgumentsParser& args_parser) {
     }
 
     //LOG IN TO THE MAIL
-    auto credentials = parse_auth_file(args_parser);
+    auto credentials = parse_auth_file();
     if (!authorize(bio, std::get<0>(credentials), std::get<1>(credentials))) {
         return false;
     }
+    load_old_mails_map();
 
     int num = get_number_of_emails(bio);
     if (num > 0) {
         //PROCESS THE EMAILS
-        if (num > 200) {
-            std::string  answer;
-            std::cout << "Downloading " << num << " of emails will take a while." << std::endl;
-            std::cout << "Are you sure you want to continue? (y/n): ";
-            std::cin >> answer;
-            if (answer[0] != 'y') {
-                return true;
-            } else {
-                std::cout << "Downloading " << num << " emails..." << std::endl;
-            }
-        }
         signal(SIGINT, signal_handler);
         signal(SIGTERM, signal_handler);
-        auto e_mail = save_emails(bio, num, *args_parser.get_out_dir(), args_parser);
-        std::cout << e_mail << ((e_mail == 1) ? " e-mail was " : " e-mails were ") << "downloaded" << std::endl;
+        auto e_mail = save_emails(bio, num, *args_parser.get_out_dir());
+        std::cout << e_mail << (args_parser.new_flag() ? " new" : "") << ((e_mail == 1) ? " e-mail was " : " e-mails were ") << "downloaded" << std::endl;
     } else {
         std::cout << "Inbox is empty" << std::endl;
     }
@@ -136,7 +127,7 @@ bool MessagesReceiver::set_tcp_connection(ArgumentsParser& args_parser) {
     return true;
 }
 
-bool MessagesReceiver::init_context(ArgumentsParser& args_parser) {
+bool MessagesReceiver::init_context() {
     SSL_library_init();
     OpenSSL_add_all_algorithms();
     SSL_load_error_strings();
@@ -146,7 +137,7 @@ bool MessagesReceiver::init_context(ArgumentsParser& args_parser) {
         return false;
     }
 
-    int verify = set_certificate_location(args_parser);
+    int verify = set_certificate_location();
     if (!verify) {
         std::cerr << "Verify contains bad value" << std::endl;//TODO
         return false;
@@ -199,10 +190,10 @@ std::string MessagesReceiver::get_response(bool period_indicator) {
     return response;
 }
 
-std::tuple<std::string, std::string> MessagesReceiver::parse_auth_file(ArgumentsParser& args_parser) {
+std::tuple<std::string, std::string> MessagesReceiver::parse_auth_file() {
     std::string username, password;
 
-    std::string auth_file = *args_parser.get_auth_file();
+    std::string auth_file = *args_parser->get_auth_file();
     std::ifstream infile(auth_file);
 
     if (!infile.is_open()) {
@@ -278,13 +269,18 @@ int MessagesReceiver::get_number_of_emails(BIO *bio) {
     return std::stoi(out[1]);
 }
 
-int MessagesReceiver::save_emails(BIO *bio, int total, const std::string& output_dir, ArgumentsParser& args_parser) {
-    int successfully_saved = 0;
-    std::fstream old_emails_db;
-
-    old_emails_db.open(OLDMAILS, std::ios_base::app);
+int MessagesReceiver::save_emails(BIO *bio, int total, const std::string& output_dir) {
+    successfully_saved = 0;
+    std::string msg_id;
 
     for (int i = 1; i <= total; i++) {
+        msg_id = "";
+        //email was downloaded before, and -n flag is set
+        bool is_old = is_email_old(i, msg_id);
+        if (args_parser->new_flag() && is_old) {
+            DEBUG_PRINT("Email isn't new " + std::to_string(i));
+            continue;
+        }
         std::string file_name = "mail-";
         std::string req = "RETR ";
         req += std::to_string(i) + "\n";
@@ -294,12 +290,6 @@ int MessagesReceiver::save_emails(BIO *bio, int total, const std::string& output
         file_name += std::to_string(i);
 
         std::string out = get_response(true);
-
-        //email was downloaded before, and -n flag is set
-        if (args_parser.new_flag() && is_email_old(out)) {
-            DEBUG_PRINT("Email isn't new");
-            continue;
-        }
 
         std::string response = out.substr(0, out.find('\n'));
         if (!check_response_state(response)) {
@@ -313,39 +303,37 @@ int MessagesReceiver::save_emails(BIO *bio, int total, const std::string& output
         outfile.open(output_dir + "/" + file_name , std::ios_base::out);
 
         if (!outfile.is_open()) {
-            std::cerr << "Failed to open output directory " << output_dir << ", directory must exist!\n";
-            return 0;
+            std::cerr << "Failed to create a new file under the specified directory " << output_dir << ", directory must exist!\n";
+            return NOT_UPDATED;
         } else {
             outfile << out;
             DEBUG_PRINT("Done writing " << file_name);
             successfully_saved++;
 
-            std::string msg_id = check_email(out);
-            if (!msg_id.empty()) { old_emails_db << msg_id << std::endl; }
+            if (!msg_id.empty()) {old_mails[msg_id] = true;}
 
-            if(args_parser.delete_flag()) {
+            if(args_parser->delete_flag()) {
                 if(delete_email(bio, i)) { DEBUG_PRINT(file_name << " was deleted"); }
             }
         }
         outfile.close();
     }
-    if (old_emails_db.is_open()) {
-        old_emails_db.close();
-    }
+
+    store_old_mails_file();
 
     std::string req = "QUIT\n";
-
     SEND_REQUEST(req);
 
-    if(get_response(false) == "DONE\r\n") {
-        DEBUG_PRINT("State updated");
+    std::string bye_msg = get_response(false);
+    if(check_response_state(bye_msg) || bye_msg == "DONE\r\n") {
+        return successfully_saved;
+    } else {
+        return NOT_UPDATED;
     }
-
-    return successfully_saved;
 }
 
 bool MessagesReceiver::delete_email(BIO *bio, int msg_number) {
-    if(this->_is_connected) {
+    if (this->_is_connected) {
         std::string req = "DELE ";
         req += std::to_string(msg_number) + "\n";
 
@@ -379,7 +367,8 @@ std::string MessagesReceiver::trim(const std::string &s)
 }
 
 std::string MessagesReceiver::get_message_id(const std::string out) {
-    std::regex pattern(".*Message-ID:\\s<.*>.*", std::regex_constants::icase);
+    //Message-ID:\r\n <DB7PR03MB5017897AC15AC9C4CD03AD3FEAC10@DB7PR03MB5017.eurprd03.prod.outlook.com>
+    static std::regex pattern(".*Message-ID:(\\r\\n)?(\\s)*<.*>.*", std::regex_constants::icase);
     std::smatch match;
 
     if (std::regex_search(out.begin(), out.end(), match, pattern))
@@ -387,45 +376,30 @@ std::string MessagesReceiver::get_message_id(const std::string out) {
     return "";
 }
 
-bool MessagesReceiver::is_email_old(const std::string e_mail) {
-    std::ifstream input(OLDMAILS);
-    for (std::string line; getline(input, line);) {
-        if (get_message_id(e_mail) == line) {
+bool MessagesReceiver::is_email_old(int i, std::string& msg_id) {
+        std::string req = "TOP ";
+        req += std::to_string(i) + " 0\n";
+
+        SEND_REQUEST(req);
+
+        std::string out = get_response(true);
+        std::string tmp_id = get_message_id(out);
+        if (old_mails.count(tmp_id) > 0) {
             return true;
         }
-    }
+    msg_id = tmp_id;
     return false;
 }
 
-std::string MessagesReceiver::check_email(std::string out) {
-    bool is_new = true;
-    std::string msg_id = get_message_id(out);
-    if (msg_id.empty()) {
-        return "";
-    }
-    std::ifstream input(OLDMAILS);
-    for (std::string line; getline(input, line);) {
-        if (msg_id == line) {
-            is_new = false;
-            break;
-        }
-    }
-    if (is_new) {
-        return msg_id;
-    } else {
-        return "";
-    }
-}
-
-int MessagesReceiver::set_certificate_location(ArgumentsParser& args_parser) {
+int MessagesReceiver::set_certificate_location() {
     int verify;
 
-    if (args_parser.get_cert_dir() && args_parser.get_cert_file()) {
-        verify = SSL_CTX_load_verify_locations(this->_ctx, args_parser.get_cert_file()->c_str(), args_parser.get_cert_dir()->c_str());
-    } else if (args_parser.get_cert_dir()) {
-        verify = SSL_CTX_load_verify_locations(this->_ctx, nullptr, args_parser.get_cert_dir()->c_str());
-    } else if (args_parser.get_cert_file()) {
-        verify = SSL_CTX_load_verify_locations(this->_ctx, args_parser.get_cert_file()->c_str(), nullptr);
+    if (args_parser->get_cert_dir() && args_parser->get_cert_file()) {
+        verify = SSL_CTX_load_verify_locations(this->_ctx, args_parser->get_cert_file()->c_str(), args_parser->get_cert_dir()->c_str());
+    } else if (args_parser->get_cert_dir()) {
+        verify = SSL_CTX_load_verify_locations(this->_ctx, nullptr, args_parser->get_cert_dir()->c_str());
+    } else if (args_parser->get_cert_file()) {
+        verify = SSL_CTX_load_verify_locations(this->_ctx, args_parser->get_cert_file()->c_str(), nullptr);
     } else {
         verify = SSL_CTX_set_default_verify_paths(this->_ctx);
     }
@@ -433,8 +407,30 @@ int MessagesReceiver::set_certificate_location(ArgumentsParser& args_parser) {
     return verify;
 }
 
-void signal_handler(int signal) {
-    std::cout << "\nSignal " << signal << " was caught" << std::endl;
+//TRY TO DELETE FILE TODO
+void MessagesReceiver::load_old_mails_map() {
+    std::ifstream input(OLDMAILS);
+    for (std::string line; getline(input, line);) {
+        old_mails[line] = true;
+    }
+}
 
+bool store_old_mails_file() {
+    std::fstream old_emails_db;
+    old_emails_db.open(OLDMAILS, std::ios_base::out);
+
+    for (const auto &pair : old_mails) {
+        old_emails_db << pair.first << "\n";
+    }
+
+    if (old_emails_db.is_open()) {
+        old_emails_db.close();
+    }
+    return true;
+}
+
+void signal_handler(int signal) {
+    std::cout << strsignal(signal) << ". " << successfully_saved << ((successfully_saved == 1) ? " e-mail was " : " e-mails were ") << "downloaded" << std::endl;
+    store_old_mails_file();
     exit(EXIT_SUCCESS);
 }

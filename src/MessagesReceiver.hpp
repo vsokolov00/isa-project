@@ -9,25 +9,26 @@
 
 #pragma once
 
-#include <atomic>
 #include <csignal>
-#include <queue>
+#include <map>
+
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <openssl/bio.h>
 
 #include "ArgumentsParser.hpp"
 
-#define MAX_PACKET_SIZE 4096
+#define MAX_PACKET_SIZE 2048
 
 #define UNSUCCESS -1
 
 #define FINAL_PERIOD 3
 
-//
+#define NOT_UPDATED 0
+
 #define OLDMAILS ".oldmails"
 
-//std::string
+//std::string is expected
 #define SEND_REQUEST(request) { \
     if (_is_tls_established) { \
         if (SSL_write(ssl, request.c_str(), request.size()) <= 0) { \
@@ -43,8 +44,6 @@
 
 class MessagesReceiver {
 public:
-    MessagesReceiver();
-
     ~MessagesReceiver();
 
     /**
@@ -57,9 +56,11 @@ private:
     BIO *bio;
     SSL *ssl = nullptr;
     SSL_CTX* _ctx;
+    ArgumentsParser* args_parser;
 
     bool _is_connected = false;
     bool _is_tls_established = false;
+    bool _mails_are_being_read = false;
 
 
     /**
@@ -74,14 +75,14 @@ private:
     /**
      * This function initialize the SSL context
      */
-    bool init_context(ArgumentsParser& args_parser);
+    bool init_context();
 
     /**
      * This function parses the file containing authentication credentials
      * @param args_parser - TODO
      * @return Returns the tuple containing username and password for server authentication
      */
-    std::tuple<std::string, std::string> parse_auth_file(ArgumentsParser& args_parser);
+    std::tuple<std::string, std::string> parse_auth_file();
 
     /**
      * This function checks the prefix of the server response.
@@ -114,7 +115,7 @@ private:
      * @param args_parser ArgumentsParser entity
      * @return Returns the number of successfully downloaded and saved e-mails
      */
-    int save_emails(BIO* bio, int total, const std::string& out_dir, ArgumentsParser& args_parser);
+    int save_emails(BIO* bio, int total, const std::string& out_dir);
 
     /**
      * This function marks the e-mail with the given message number as deleted,
@@ -147,7 +148,7 @@ private:
      * @return Returns the empty string in case the e-mail was already read by the popcl before,
      * otherwise returns the message id of the e-mail
      */
-    std::string check_email(std::string e_mail);
+    bool is_email_old(int i, std::string& msg_id);
 
     /**
      * This function sets the
@@ -155,7 +156,7 @@ private:
      * @param args_parser
      * @return
      */
-    int set_certificate_location(ArgumentsParser& args_parser);
+    int set_certificate_location();
 
 
     /**
@@ -172,6 +173,10 @@ private:
      * Availability: https://www.techiedelight.com/trim-string-cpp-remove-leading-trailing-spaces/
      */
     std::string trim(const std::string &s);
+
+    void load_old_mails_map();
 };
 
 void signal_handler(int signal);
+
+bool store_old_mails_file();

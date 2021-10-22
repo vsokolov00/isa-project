@@ -20,10 +20,12 @@ if (APPLE)
     set(OPENSSL_INCLUDE_DIR /usr/local/Cellar/openssl@3/3.0.0/include)
 endif()
 
+set(CMAKE_CXX_FLAGS "-Wall -Wextra")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 
 # If set then program will be outputting some helping/additional information
-#add_definitions(-DDEBUG)
+add_definitions(-DDEBUG)
 
 set(sources
     src/popcl.cpp
