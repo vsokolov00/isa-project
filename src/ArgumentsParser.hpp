@@ -22,7 +22,7 @@
     std::cout << "Usage: popcl <server> [-p <port>] [-T|-S [-c <certfile>] [-C <certaddr>]] [-d] [-n] -a <auth_file> -o <out_dir>" << std::endl; \
 }
 
-//macro is used to check whether the CLI option on the 'curr_arg' position has a valid argument
+//macro is used to check whether the CLI option (which requires the argument) on the 'curr_arg' position has a valid argument
 #define CHECK_IF_HAS_ARG(curr_arg) { \
     if (curr_arg + 1 >= argc || argv[curr_arg + 1][0] == '-') { \
         std::cerr << "Option " << argv[curr_arg] << " doesn't have an argument." << std::endl; \
@@ -30,10 +30,11 @@
         return false;                             \
     }                                \
 }
-
+//this macro is used for the debug purposes
 #define DEBUG_PRINT(str) \
             do { if (DEBUG_TEST) std::cerr << str  << std::endl;} while (0)
 
+//default ports
 const short POP3S_PORT = 995;
 const short POP3_PORT = 110;
 
@@ -44,7 +45,9 @@ public:
 
     /**
      * This function parses the arguments and stores their values to the private variables
-     * @param argc Numer of the arguments
+     * when option which requires an argument was read then CHECK_IF_HAS_ARG macro is used,
+     * it checks whether the next CL argument doesn't start with the dash sign
+     * @param argc Number of the arguments
      * @param argv Array of the arguments
      * @return Returns true if the arguments were parsed successfully, otherwise returns false
      */

@@ -18,11 +18,13 @@ int main(int argc, char** argv) {
     DEBUG_PRINT("Application starts.");
 
     ArgumentsParser args_parser{};
-    MessagesReceiver msg_retriever{};
 
     if(!args_parser.args_parse(argc, argv)) {
         return EXIT_FAILURE;
     }
+
+    MessagesReceiver msg_retriever{};
+
     if(!msg_retriever.set_tcp_connection(args_parser)) {
         return EXIT_FAILURE;
     }

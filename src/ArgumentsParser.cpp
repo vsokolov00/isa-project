@@ -23,14 +23,17 @@ bool ArgumentsParser::args_parse(int argc, char** argv) {
         USAGE;
         return false;
     } else {
-        if (argv[1][0] == '-') {
-            std::cerr << "Server isn't specified!" << std::endl;
-            USAGE;
-            return false;
-        } else {
-            server = new std::string(argv[1]);
-        }
-        for (int i = 2; i < argc; ++i) {
+        for (int i = 1; i < argc; ++i) {
+            //server argument check
+            if (argv[i][0] != '-') {
+                if (std::isalnum(argv[i][0])) {
+                    ArgumentsParser::server = new std::string(argv[i]);
+                    continue;
+                } else {
+                    USAGE;
+                    return false;
+                }
+            }
             switch (argv[i][1]) {
                 case 'p':
                     CHECK_IF_HAS_ARG(i);
