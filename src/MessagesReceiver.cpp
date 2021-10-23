@@ -286,8 +286,11 @@ int MessagesReceiver::save_emails(BIO *bio, int total, const std::string& output
         req += std::to_string(i) + "\n";
 
         SEND_REQUEST(req);
-
-        file_name += std::to_string(i);
+        if (msg_id.empty()) {
+            file_name += std::to_string(i);
+        } else {
+            file_name += msg_id;
+        }
 
         std::string out = get_response(true);
 

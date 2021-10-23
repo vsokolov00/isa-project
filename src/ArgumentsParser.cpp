@@ -19,7 +19,7 @@ ArgumentsParser::~ArgumentsParser() {
 }
 
 bool ArgumentsParser::args_parse(int argc, char** argv) {
-    if (argc < 3 || argc > 10) {
+    if (argc < 6 || argc > 15) {
         USAGE;
         return false;
     } else {
