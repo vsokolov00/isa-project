@@ -139,7 +139,7 @@ bool MessagesReceiver::init_context() {
 
     int verify = set_certificate_location();
     if (!verify) {
-        std::cerr << "Verify contains bad value" << std::endl;//TODO
+        std::cerr << "It is not possible to verify the identity of the " << *args_parser->get_server() << " server." << std::endl;
         return false;
     }
     return true;
