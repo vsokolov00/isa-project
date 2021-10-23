@@ -6,7 +6,7 @@ The `popcl` application is capable of downloading the e-mails from the given e-m
 The application is fully functional on Linux, FreeBSD and macOS.
 
 ### Installation
-Parameters of compilation are in `CMakeList.txt` file, `Makefile` uses `CMake` to create the executable application.
+Parameters of compilation are in `CMakeLists.txt` file, `Makefile` uses `CMake` to create the executable application.
 `make` command will comile the `popcl` binary. `make clean` will delete all files and folders created during the compilation.
 
 ### Usage

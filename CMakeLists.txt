@@ -25,7 +25,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 
 # If set then program will be outputting some helping/additional information
-add_definitions(-DDEBUG)
+# add_definitions(-DDEBUG)
 
 set(sources
     src/popcl.cpp

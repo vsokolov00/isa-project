@@ -17,3 +17,5 @@ all:
 	mv ${BUILD_DIR}/popcl popcl
 clean:
 	rm -rf  ./build popcl .oldmails
+tar:
+	tar -cvf xsokol15.tar CMakeLists.txt src README.md Makefile

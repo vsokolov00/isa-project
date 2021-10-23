@@ -17,7 +17,6 @@
 int main(int argc, char** argv) {
     //to enable debug helping messages see CMakeLists.txt file
     DEBUG_PRINT("Application starts.");
-    using std::chrono::milliseconds;
 
     ArgumentsParser args_parser{};
 
@@ -27,15 +26,9 @@ int main(int argc, char** argv) {
 
     MessagesReceiver msg_retriever{};
 
-    auto t1 = std::chrono::high_resolution_clock::now();
     if(!msg_retriever.set_tcp_connection(args_parser)) {
         return EXIT_FAILURE;
     }
-    auto t2 = std::chrono::high_resolution_clock::now();
-
-    auto ms_int = std::chrono::duration_cast<milliseconds>(t2 - t1);
-    std::cout << ms_int.count()/1000 << "s\n";
-
 
     return EXIT_SUCCESS;
 }
