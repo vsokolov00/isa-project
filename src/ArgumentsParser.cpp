@@ -1,13 +1,12 @@
 /* =========================================================================================================
    Case:      Brno University of Technology, ISA - Network Applications and Network Administration
-   Date:      TODO
+   Date:      06.11.2021
    Author:    Vladislav Sokolovskii
    Contact:   xsokol15@stud.fit.vutbr.cz
    ========================================================================================================== */
 
 #include "ArgumentsParser.hpp"
 
-#include <getopt.h>
 #include <iostream>
 
 ArgumentsParser::~ArgumentsParser() {

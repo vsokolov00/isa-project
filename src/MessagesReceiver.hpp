@@ -1,6 +1,6 @@
 /* =========================================================================================================
    Case:      Brno University of Technology, ISA - Network Applications and Network Administration
-   Date:      TODO
+   Date:      06.11.2021
    Author:    Vladislav Sokolovskii
    Contact:   xsokol15@stud.fit.vutbr.cz
    Description: This is the core class containing the methods which are responsible for the actual communication
@@ -175,9 +175,22 @@ private:
      */
     std::string trim(const std::string &s);
 
+    /**
+     * This function loads message-ids of the downloaded e-mails to the internal map structure
+     * for the fast access from during the program execution. The function is executed at the
+     * beginning of the program.
+     */
     void load_old_mails_map();
 };
 
+/**
+ * This function handles the SIGTERM and SIGINT signals
+ * @param signal number
+ */
 void signal_handler(int signal);
 
+/**
+ * This function stores message-ids of the downloaded e-mails to the .oldmails file
+ * @return
+ */
 bool store_old_mails_file();

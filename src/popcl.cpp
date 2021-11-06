@@ -1,4 +1,3 @@
-
 /* =========================================================================================================
    Case:      Brno University of Technology, ISA - Network Applications and Network Administration
    Date:      TODO
@@ -8,7 +7,6 @@
    ========================================================================================================== */
 
 #include <iostream>
-#include <chrono>
 
 #include "ArgumentsParser.hpp"
 #include "MessagesReceiver.hpp"

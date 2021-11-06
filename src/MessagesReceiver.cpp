@@ -1,6 +1,6 @@
 /* =========================================================================================================
    Case:      Brno University of Technology, ISA - Network Applications and Network Administration
-   Date:      TODO
+   Date:      06.11.2021
    Author:    Vladislav Sokolovskii
    Contact:   xsokol15@stud.fit.vutbr.cz
    ========================================================================================================== */
@@ -96,12 +96,13 @@ bool MessagesReceiver::set_tcp_connection(ArgumentsParser& args_parser) {
                 std::cerr << "The TLS/SSL handshake was not successful" << std::endl;
                 return false;
             }
-            //if (!SSL_get_peer_certificate(ssl)) {
-            if (ssl && SSL_get_verify_result(ssl) != X509_V_OK) {
-                std::cerr << "Verification of certificates failed." << std::endl;
-                return false;
-            } else {
-                _is_tls_established = true;
+            if (!SSL_get_peer_certificate(ssl)) {
+                if (ssl && SSL_get_verify_result(ssl) != X509_V_OK) {
+                    std::cerr << "Verification of certificates failed." << std::endl;
+                    return false;
+                } else {
+                    _is_tls_established = true;
+                }
             }
         }
     }
@@ -306,8 +307,11 @@ int MessagesReceiver::save_emails(BIO *bio, int total, const std::string& output
         outfile.open(output_dir + "/" + file_name , std::ios_base::out);
 
         if (!outfile.is_open()) {
-            std::cerr << "Failed to create a new file under the specified directory " << output_dir << ", directory must exist!\n";
-            return NOT_UPDATED;
+            outfile.open(output_dir + "/" + "mail-" + std::to_string(i) , std::ios_base::out);
+            if (!outfile.is_open()) {
+                std::cerr << "Failed to save an email. Output directory " << output_dir << " must exist." << std::endl;
+                return NOT_UPDATED;
+            }
         } else {
             outfile << out;
             DEBUG_PRINT("Done writing " << file_name);
@@ -343,7 +347,7 @@ bool MessagesReceiver::delete_email(BIO *bio, int msg_number) {
         SEND_REQUEST(req)
 
         if (!check_response_state(get_response(false))) {
-            std::cerr << "Couldn't delete a message" << std::endl;
+            std::cerr << "Couldn't delete a message number " << msg_number << std::endl;
             return false;
         }
         return true;
@@ -380,16 +384,17 @@ std::string MessagesReceiver::get_message_id(const std::string out) {
 }
 
 bool MessagesReceiver::is_email_old(int i, std::string& msg_id) {
-        std::string req = "TOP ";
-        req += std::to_string(i) + " 0\n";
+    std::string req = "TOP ";
+    req += std::to_string(i) + " 0\n";
 
-        SEND_REQUEST(req);
+    SEND_REQUEST(req);
 
-        std::string out = get_response(true);
-        std::string tmp_id = get_message_id(out);
-        if (old_mails.count(tmp_id) > 0) {
-            return true;
-        }
+    std::string out = get_response(true);
+    std::string tmp_id = get_message_id(out);
+    if (old_mails.count(tmp_id) > 0) {
+        msg_id = tmp_id;
+        return true;
+    }
     msg_id = tmp_id;
     return false;
 }
@@ -410,7 +415,6 @@ int MessagesReceiver::set_certificate_location() {
     return verify;
 }
 
-//TRY TO DELETE FILE TODO
 void MessagesReceiver::load_old_mails_map() {
     std::ifstream input(OLDMAILS);
     for (std::string line; getline(input, line);) {
