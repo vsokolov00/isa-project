@@ -39,5 +39,6 @@ popcl <server> [-p <port>] [-T|-S [-c <certfile>] [-C <certaddr>]] [-d] [-n] -a 
 │   └── MessagesReceiver.hpp
 ├── CMakeList.txt
 ├── Makefile
+├── manual.pdf
 └── README.md
 ```
