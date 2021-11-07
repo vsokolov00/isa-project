@@ -96,13 +96,11 @@ bool MessagesReceiver::set_tcp_connection(ArgumentsParser& args_parser) {
                 std::cerr << "The TLS/SSL handshake was not successful" << std::endl;
                 return false;
             }
-            if (!SSL_get_peer_certificate(ssl)) {
-                if (ssl && SSL_get_verify_result(ssl) != X509_V_OK) {
-                    std::cerr << "Verification of certificates failed." << std::endl;
-                    return false;
-                } else {
-                    _is_tls_established = true;
-                }
+            if (ssl && SSL_get_verify_result(ssl) != X509_V_OK) {
+                std::cerr << "Verification of certificates failed." << std::endl;
+                return false;
+            } else {
+                _is_tls_established = true;
             }
         }
     }
