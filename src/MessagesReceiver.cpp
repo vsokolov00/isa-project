@@ -312,7 +312,7 @@ int MessagesReceiver::save_emails(BIO *bio, int total, const std::string& output
                 std::cerr << "Failed to save an email. Output directory " << output_dir << " must exist." << std::endl;
                 return NOT_UPDATED;
             }
-
+        }
         outfile << out;
         DEBUG_PRINT("Done writing " << file_name);
         successfully_saved++;
@@ -322,7 +322,6 @@ int MessagesReceiver::save_emails(BIO *bio, int total, const std::string& output
         if(args_parser->delete_flag()) {
             if(delete_email(bio, i)) { DEBUG_PRINT(file_name << " was deleted"); }
         }
-
         outfile.close();
     }
 
