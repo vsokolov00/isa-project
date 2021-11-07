@@ -1,6 +1,6 @@
 # =========================================================================================================
 #  Case:      Brno University of Technology, ISA - Network Applications and Network Administration
-#  Date:      TODO
+#  Date:      07.11.2021
 #  Author:    Vladislav Sokolovskii
 #  Contact:   xsokol15@stud.fit.vutbr.cz
 #  Description: CMake - responsible for the building the project binary file

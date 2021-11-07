@@ -1,6 +1,6 @@
 /* =========================================================================================================
    Case:      Brno University of Technology, ISA - Network Applications and Network Administration
-   Date:      06.11.2021
+   Date:      07.11.2021
    Author:    Vladislav Sokolovskii
    Contact:   xsokol15@stud.fit.vutbr.cz
    ========================================================================================================== */
@@ -59,7 +59,7 @@ bool MessagesReceiver::set_tcp_connection(ArgumentsParser& args_parser) {
 
     if (args_parser.is_secure()) {
         if (!SSL_get_peer_certificate(ssl)) {
-            std::cout << "No certificate was presented by the peer or no connection was established" << std::endl;
+            std::cerr << "No certificate was presented by the peer or no connection was established" << std::endl;
             return false;
         } else {
             if (ssl && SSL_get_verify_result(ssl) != X509_V_OK) {

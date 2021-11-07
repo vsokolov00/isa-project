@@ -1,6 +1,6 @@
 /* =========================================================================================================
    Case:      Brno University of Technology, ISA - Network Applications and Network Administration
-   Date:      06.11.2021
+   Date:      07.11.2021
    Author:    Vladislav Sokolovskii
    Contact:   xsokol15@stud.fit.vutbr.cz
    Description: This class is responsible for the correct command line arguments parsing and storing the
