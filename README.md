@@ -1,4 +1,4 @@
-# ISA - Network Applications and Network Administration
+# VUT-FIT-3BIT ISA - Network Applications and Network Administration
 ## POP3 client with the TLS support
 
 ### Application description
@@ -42,3 +42,34 @@ popcl <server> [-p <port>] [-T|-S [-c <certfile>] [-C <certaddr>]] [-d] [-n] -a 
 ├── manual.pdf
 └── README.md
 ```
+
+### Obtained points: 20/20
+### Assessment remarks:
+- Nesprávná interpretace .. na začátku řádku e-mailu
+- Podivné řešení konců souborů se zprávami
+- Program vykazoval činnost klienta POP3
+- Úspěšný test stažení zpráv přes IPv4
+- Úspěšný test stažení zpráv přes IPv4
+- Úspěšné připojení k serveru s validním certifikátem
+- Nepodařilo se zabezpečené stáhnout zprávy ze serveru s validním certifikátem
+- Úspěšný test stažení zpráv přes IPv6
+- Úspěšný test stažení zpráv přes IPv6
+- Podpora IPv4 adresy jako jména serveru
+- Chybí podpora IPv6 adresy jako jména serveru
+- Úspěšné zvládnutí čtení ze soketů
+- Úspěšný test podpory -c
+- Úspěšný test podpory -C
+- Nedetekováno rozumné a z pohledu síťových přenosů efektivní vyhledání nových zpráv
+- Úspěšné smazání zprávy na serveru
+- Podporováno STARTTLS v kombinaci s -c
+- Podporováno STARTTLS v kombinaci s -C
+- Úspěšné rozpoznání serveru jako nedůvěryhodného
+- Úspěch v testu s chybějícím autentizačním souborem
+- Úspěch v testu s neexistujícím serverem POP3
+- Úspěch v testu s chybnou autentizací
+- Úspěch v testu s chybným autentizačním souborem
+- Dokumentace obsahuje text na černém pozadí, nečitelné na papíře, plýtvání barvou
+- Dokumentace mohla být propracovanější, chybí např. teorie
+- Informativní README
+- Pěkný, modulární kód
+ 
